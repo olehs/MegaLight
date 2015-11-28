@@ -1,5 +1,8 @@
 #include "RelayModule.h"
+
+#ifndef NO_PWM_LIB
 #include "PWM.h"
+#endif
 
 RelayModule::RelayModule(int pin)
     : ID(DEFAULT_ID)
@@ -178,9 +181,11 @@ void RelayModule::setupPin()
 {
     if(m_pin)
     {
+#ifndef NO_PWM_LIB
         if (m_pwm)
             SetPinFrequencySafe(m_pin, m_pwm);
         else
+#endif
             pinMode(m_pin, OUTPUT);
     }
     updatePin();
@@ -199,7 +204,11 @@ void RelayModule::updatePin(uint32_t timeout, bool doEmit)
         {
             byte onVal  = m_invert ? PWM_HIGH - m_value : m_value;
             byte offVal = m_invert ? PWM_HIGH : 0;
+#ifndef NO_PWM_LIB
             pwmWrite(m_pin, m_on ? onVal : offVal);
+#else
+            analogWrite(m_pin, m_on ? onVal : offVal);
+#endif
         }
         else
         {

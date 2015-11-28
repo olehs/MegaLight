@@ -100,7 +100,12 @@ P(bDCLICK_INTERVAL) = "Double-click interval (ms)";
 P(bPREVENT_CLICK) = "Prevent Click";
 P(bDELETE) = "!DELETE!";
 
+#ifndef NO_PWM_LIB
 P(rPWM) = "PWM Frequency (Hz)<br>0 - On/Off Switch";
+#else
+P(rPWM) = "PWM";
+#endif
+
 P(rON) = "On";
 P(rINVERT) = "Invert State";
 P(rVALUE) = "Dimmer value (0-255)";

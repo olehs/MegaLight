@@ -1,5 +1,10 @@
-#include <EEPROM.h>
+#define NO_PWM_LIB
+
+#ifndef NO_PWM_LIB
 #include "PWM.h"
+#endif
+
+#include <EEPROM.h>
 #include <JointPoint.h>
 
 // MajorDoMo server settings
