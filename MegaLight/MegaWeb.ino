@@ -795,6 +795,7 @@ void relaysCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail
     char name[NAMELEN];
     char value[VALUELEN];
 
+    jpList.externalEventsEnabled = false;
     while (strlen(url_tail)) {
       rc = server.nextURLparam(&url_tail, name, NAMELEN, value, VALUELEN);
       if (rc == URLPARAM_OK) {
@@ -830,8 +831,8 @@ void relaysCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail
           b->setSaveState((RelayStateSave::Save)atoi(value));
       }
     }
+    jpList.externalEventsEnabled = true;
   }
-
 
   if (params_present)
   {

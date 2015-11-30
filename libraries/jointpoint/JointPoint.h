@@ -30,6 +30,8 @@ public:
     String auth;
     uint16_t port;
 
+    bool externalEventsEnabled;
+
     void loadConfig();
     void saveConfig();
     inline void removeDB() {config.removeDB();}

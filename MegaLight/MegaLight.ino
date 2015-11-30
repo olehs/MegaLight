@@ -1,4 +1,4 @@
-#define NO_PWM_LIB
+//#define NO_PWM_LIB
 
 #ifndef NO_PWM_LIB
 #include "PWM.h"

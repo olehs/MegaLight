@@ -13,6 +13,7 @@ JointPointList::JointPointList()
     : callableButtonListener(this,   &JointPointList::buttonEventListener)
     , callableRelayListener(this,    &JointPointList::relayEventListener)
     , callableExtrenalListener(this, &JointPointList::externalEventListener)
+    , externalEventsEnabled(true)
     , tokenEvaluator(this, &JointPointList::eval_token)
     , evaluator(&tokenEvaluator)
     , config(this)
@@ -519,6 +520,9 @@ int JointPointList::eval_token(char *expr)
 
 void JointPointList::externalEventListener(int event, EventParam *param)
 {
+    if(!externalEventsEnabled)
+        return;
+    
     if(event == 0) // relay event
     {
         RelayModule *relay = reinterpret_cast<RelayModule *>(param->sender);
