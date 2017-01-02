@@ -366,7 +366,7 @@ void stateCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail,
   }
 }
 
-BounceButton *btnByParam(char *param, char *name, BounceButton **nb)
+BounceButton *btnByParam(const char *param, const char *name, BounceButton **nb)
 {
   BounceButton *b = 0;
   if (strncmp(param, name, strlen(name)) == 0)
@@ -747,7 +747,7 @@ const char * saveStateName(int e)
   }
 }
 
-RelayModule *relayByParam(char *param, char *name, RelayModule **nb)
+RelayModule *relayByParam(const char *param, const char *name, RelayModule **nb)
 {
   RelayModule *b = 0;
   if (strncmp(param, name, strlen(name)) == 0)
@@ -1066,7 +1066,7 @@ void relaysCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail
   server.printP(Page_end);
 }
 
-JointPoint *jpByParam(char *param, char *name, JointPoint **nb)
+JointPoint *jpByParam(const char *param, const char *name, JointPoint **nb)
 {
   JointPoint *b = 0;
   if (strncmp(param, name, strlen(name)) == 0)
@@ -1615,4 +1615,3 @@ void setupWeb()
   webserver.addCommand("joints", &jointsCmd);
   webserver.addCommand("jpevents", &jpeventsCmd);
 }
-
