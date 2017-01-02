@@ -4,6 +4,7 @@
 #include <utility/w5100.h>
 
 #define TCP_RETRANSMISSION_TIME 150
+#define ITEMS_PER_PAGE 10
 
 static uint8_t mac[] = { 0x34, 0xAD, 0xBE, 0x43, 0xFE, 0x68 };
 static uint8_t ip[] = { 192, 168, 21, 210 };
@@ -12,25 +13,25 @@ void saveEthernetConfig()
 {
   EEPROM.update(0, 0xDE);
   EEPROM.update(1, 0xAD);
-  for(int i=0; i<6; i++)
+  for (int i = 0; i < 6; i++)
     EEPROM.update(i + 2, mac[i]);
-  
-  for(int i=0; i<4; i++)
+
+  for (int i = 0; i < 4; i++)
     EEPROM.update(i + 8, ip[i]);
 }
 
 void loadEthernetConfig()
 {
-  if(EEPROM.read(0) != 0xDE || EEPROM.read(1) != 0xAD)
+  if (EEPROM.read(0) != 0xDE || EEPROM.read(1) != 0xAD)
   {
     saveEthernetConfig();
     return;
   }
-  
-  for(int i=0; i<6; i++)
+
+  for (int i = 0; i < 6; i++)
     mac[i] = EEPROM.read(i + 2);
-  
-  for(int i=0; i<4; i++)
+
+  for (int i = 0; i < 4; i++)
     ip[i] = EEPROM.read(i + 8);
 }
 
@@ -130,21 +131,21 @@ P(Config_set) = "<font size=\"3\" color=\"red\">New configuration stored!</font>
 void printHeader(WebServer &server, int highlight = 0)
 {
   int c = 0;
-  if(++c == highlight) server.printP(Header_font_start);
+  if (++c == highlight) server.printP(Header_font_start);
   server.printP(Header_Buttons);
-  if(c == highlight) server.printP(Header_font_end);
+  if (c == highlight) server.printP(Header_font_end);
 
-  if(++c == highlight) server.printP(Header_font_start);
+  if (++c == highlight) server.printP(Header_font_start);
   server.printP(Header_Relays);
-  if(c == highlight) server.printP(Header_font_end);
-  
-  if(++c == highlight) server.printP(Header_font_start);
+  if (c == highlight) server.printP(Header_font_end);
+
+  if (++c == highlight) server.printP(Header_font_start);
   server.printP(Header_JointPoints);
-  if(c == highlight) server.printP(Header_font_end);
-  
-  if(++c == highlight) server.printP(Header_font_start);
+  if (c == highlight) server.printP(Header_font_end);
+
+  if (++c == highlight) server.printP(Header_font_start);
   server.printP(Header_Config);
-  if(c == highlight) server.printP(Header_font_end);
+  if (c == highlight) server.printP(Header_font_end);
 }
 
 void defaultCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail, bool tail_complete)
@@ -222,7 +223,7 @@ void configCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail
       }
     }
   }
-  
+
   if (params_present)
   {
     saveEthernetConfig();
@@ -245,21 +246,21 @@ void configCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail
 
   server.printP(MAC);
 
-  for (int i=0; i<6; i++)
+  for (int i = 0; i < 6; i++)
   {
     server.printP(Form_input_text_start);
-    server.print("m"); server.print(i+1);
+    server.print("m"); server.print(i + 1);
     server.printP(Form_input_value); server.print(mac[i], HEX);
     server.printP(Form_input_end);
   }
 
-  server.printP(br);server.printP(br);
+  server.printP(br); server.printP(br);
   server.printP(IP);
-  
-  for (int i=0; i<4; i++)
+
+  for (int i = 0; i < 4; i++)
   {
     server.printP(Form_input_number_start);
-    server.print("i"); server.print(i+1);
+    server.print("i"); server.print(i + 1);
     server.printP(Form_input_value); server.print(ip[i]);
     server.printP(Form_input_min); server.print(0);
     server.printP(Form_input_max); server.print(255);
@@ -404,6 +405,7 @@ void buttonsCmd(WebServer &server, WebServer::ConnectionType type, char *url_tai
   BounceButton *b;
   BounceButton *nb = 0;
   bool saved = false;
+  int page = 1;
 
   if (type == WebServer::HEAD)
   {
@@ -438,6 +440,11 @@ void buttonsCmd(WebServer &server, WebServer::ConnectionType type, char *url_tai
         if (!strlen(value))
           continue;
 
+        if (strcmp(name, "page") == 0)
+        {
+          page = atoi(value);
+          continue;
+        }
 
         params_present = true;
 
@@ -479,7 +486,7 @@ void buttonsCmd(WebServer &server, WebServer::ConnectionType type, char *url_tai
         delete nb;
     }
     jpList.saveConfig();
-    server.httpSeeOther("/buttons?saved=1");
+    server.httpSeeOther(String("/buttons?saved=1&page=" + String(page)).c_str());
     return;
   }
 
@@ -534,8 +541,15 @@ void buttonsCmd(WebServer &server, WebServer::ConnectionType type, char *url_tai
 
   server.printP(table_tr_end);
 
+  int t = 0;
   for (ButtonList::iterator itr = jpList.allButtons()->begin(); itr != jpList.allButtons()->end(); ++itr)
   {
+    if (t++ < (page - 1) * ITEMS_PER_PAGE)
+      continue;
+
+    if (t > page * ITEMS_PER_PAGE)
+      break;
+
     b = (*itr);
     server.printP(table_tr_start);
 
@@ -730,6 +744,19 @@ void buttonsCmd(WebServer &server, WebServer::ConnectionType type, char *url_tai
   if (saved)
     server.printP(Config_set);
 
+  server.printP(br);
+  for(int g=0; g<ceil(jpList.buttonCount() / 10.0); g++)
+  {
+    if(page == g+1)
+    {
+      server.print(g+1); server.print("&nbsp;");
+    }
+    else
+    {
+      server.print("<a href=\"/buttons?page="); server.print(g+1); server.print("\">");server.print(g+1); server.print("</a>&nbsp;");
+    }
+  }
+
   server.printP(Page_end);
 }
 
@@ -773,6 +800,7 @@ void relaysCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail
   RelayModule *b;
   RelayModule *nb = 0;
   bool saved = false;
+  int page = 1;
 
   if (type == WebServer::HEAD)
   {
@@ -807,6 +835,12 @@ void relaysCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail
 
         if (!strlen(value))
           continue;
+
+        if (strcmp(name, "page") == 0)
+        {
+          page = atoi(value);
+          continue;
+        }
 
         params_present = true;
 
@@ -844,7 +878,7 @@ void relaysCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail
         delete nb;
     }
     jpList.saveConfig();
-    server.httpSeeOther("/relays?saved=1");
+    server.httpSeeOther(String("/relays?saved=1&page=" + String(page)).c_str());
     return;
   }
 
@@ -893,8 +927,15 @@ void relaysCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail
 
   server.printP(table_tr_end);
 
+  int t = 0;
   for (RelayList::iterator itr = jpList.allRelays()->begin(); itr != jpList.allRelays()->end(); ++itr)
   {
+    if (t++ < (page - 1) * ITEMS_PER_PAGE)
+      continue;
+
+    if (t > page * ITEMS_PER_PAGE)
+      break;
+
     b = (*itr);
     server.printP(table_tr_start);
 
@@ -1063,6 +1104,19 @@ void relaysCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail
   if (saved)
     server.printP(Config_set);
 
+  server.printP(br);
+  for(int g=0; g<ceil(jpList.relayCount() / 10.0); g++)
+  {
+    if(page == g+1)
+    {
+      server.print(g+1); server.print("&nbsp;");
+    }
+    else
+    {
+      server.print("<a href=\"/relays?page="); server.print(g+1); server.print("\">");server.print(g+1); server.print("</a>&nbsp;");
+    }
+  }
+
   server.printP(Page_end);
 }
 
@@ -1096,6 +1150,7 @@ void jointsCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail
   JointPoint *b;
   JointPoint *nb = 0;
   bool saved = false;
+  int page = 1;
 
   if (type == WebServer::HEAD)
   {
@@ -1126,6 +1181,12 @@ void jointsCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail
 
         if (!strlen(value))
           continue;
+
+        if (strcmp(name, "page") == 0)
+        {
+          page = atoi(value);
+          continue;
+        }
 
         if (!params_present)
         {
@@ -1162,7 +1223,7 @@ void jointsCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail
     if (nb && (nb->ID == DEFAULT_ID))
       jpList.remove(nb);
     jpList.saveConfig();
-    server.httpSeeOther("/joints?saved=1");
+    server.httpSeeOther(String("/joints?saved=1&page=" + String(page)).c_str());
     return;
   }
 
@@ -1208,8 +1269,15 @@ void jointsCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail
 
   server.printP(table_tr_end);
 
+  int t = 0;
   for (JointPointList::iterator itr = jpList.begin(); itr != jpList.end(); ++itr)
   {
+    if (t++ < (page - 1) * ITEMS_PER_PAGE)
+      continue;
+
+    if (t > page * ITEMS_PER_PAGE)
+      break;
+
     b = (*itr);
     server.printP(table_tr_start);
 
@@ -1241,9 +1309,9 @@ void jointsCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail
       if (a == RelayAction::Unassigned)
         continue;
       server.print(eventName(e));
-      server.print("&nbsp;-&nbsp;"); 
-      if(b->eventAction((ButtonEvent::Type)e).condition.length()) {
-        server.print("("); server.print(b->eventAction((ButtonEvent::Type)e).condition); server.print(")&nbsp;-&nbsp;"); 
+      server.print("&nbsp;-&nbsp;");
+      if (b->eventAction((ButtonEvent::Type)e).condition.length()) {
+        server.print("("); server.print(b->eventAction((ButtonEvent::Type)e).condition); server.print(")&nbsp;-&nbsp;");
       }
       server.print(actionName(a));
       server.printP(br);
@@ -1367,6 +1435,19 @@ void jointsCmd(WebServer &server, WebServer::ConnectionType type, char *url_tail
 
   if (saved)
     server.printP(Config_set);
+
+  server.printP(br);
+  for(int g=0; g<ceil(jpList.size() / 10.0); g++)
+  {
+    if(page == g+1)
+    {
+      server.print(g+1); server.print("&nbsp;");
+    }
+    else
+    {
+      server.print("<a href=\"/joints?page="); server.print(g+1); server.print("\">");server.print(g+1); server.print("</a>&nbsp;");
+    }
+  }
 
   server.printP(Page_end);
 }
@@ -1597,13 +1678,13 @@ void jpeventsCmd(WebServer &server, WebServer::ConnectionType type, char *url_ta
 void setupWeb()
 {
   loadEthernetConfig();
-  
+
   Ethernet.begin(mac, ip);
   W5100.setRetransmissionTime(TCP_RETRANSMISSION_TIME);
   W5100.setRetransmissionCount(3);
 
   webserver.begin();
-  
+
   Serial.print("Server started at ");
   Serial.println(Ethernet.localIP());
 
