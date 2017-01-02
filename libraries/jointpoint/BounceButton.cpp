@@ -1,4 +1,4 @@
-#include "bouncebutton.h"
+#include "BounceButton.h"
 
 BounceButton::BounceButton(int pin, ButtonPullup::PullupType pullup)
     : Bounce()
