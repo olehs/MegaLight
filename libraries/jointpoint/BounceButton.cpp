@@ -114,9 +114,7 @@ void BounceButton::check(uint32_t millisec)
     if(up() && (clickCount > 0) && (millisec - buttonPressTimeStamp) >= m_doubleClickInterval)
     {
         if(clickCount == 1 && m_preventClick)
-        {
-            queueEvent((millisec - buttonPressTimeStamp) >= m_holdInterval ? ButtonEvent::LongClick : ButtonEvent::Click);
-        }
+            queueEvent(ButtonEvent::Click);
 
         clickCount = 0;
     }
